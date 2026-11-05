@@ -1,5 +1,7 @@
 from http.client import HTTPException
 
+from sqlalchemy import text
+
 from fastapi import FastAPI
 
 from app.db import engine
@@ -12,10 +14,13 @@ def health():
 
 @app.get("/health/db")
 def health_db():
-    if(not engine.connect()):
-        error(503, "Database is not available")
-    else:
-        return {"status": "ok" , "database": "connected"}
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="Database connection failed")
+    
+    return {"status": "ok", "database": "connected"}
 
 def error(code = 500, message = "Internal Server Error"):
     raise HTTPException(status_code=code, detail=message)
