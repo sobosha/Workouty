@@ -20,6 +20,6 @@ class Exercises(Base):
     name: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     category: Mapped[str] = mapped_column(String(50), nullable=False)
-    muscle_group: Mapped[str] = mapped_column(String(50), nullable=True)
+    muscle_group: Mapped[str | None] = mapped_column(String(50), nullable=True)
     
     
