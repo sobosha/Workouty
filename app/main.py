@@ -8,10 +8,15 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from app.schemas import RegisterRequest, UserResponse
+from app.dependencies import get_current_user
+from app.schemas import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from app.models import Users
-from app.security import hash_password
+from app.security import hash_password, verify_email_format, verify_password
+from app.tokens import create_access_token
 app = FastAPI(title = "Workouty API")
+
+
+"""-------------get endpoints-------------"""
 
 @app.get("/health")
 def health():
@@ -27,6 +32,13 @@ def health_db():
     
     return {"status": "ok", "database": "connected"}
 
+@app.get("/users/me", response_model=UserResponse)
+def get_current_user_info(current_user: Users = Depends(get_current_user)) -> UserResponse:
+    return current_user
+
+
+"""-------------post endpoints-------------"""
+
 @app.post("/auth/register" , response_model = UserResponse , status_code = 201)
 def register_user(payload: RegisterRequest , db: Session = Depends(get_db_session)) -> UserResponse:
     user = Users(email = payload.email , password_hash = hash_password(payload.password))
@@ -37,7 +49,19 @@ def register_user(payload: RegisterRequest , db: Session = Depends(get_db_sessio
         db.rollback()
         error(code=409, message="Email already registered")
     db.refresh(user)
-    return UserResponse(id = user.id , email = user.email , created_at = user.created_at)
+    return user
+
+@app.post("/auth/login" , response_model = TokenResponse)
+def login_user(payload: LoginRequest , db: Session = Depends(get_db_session)) -> TokenResponse:
+    user = db.query(Users).filter(Users.email == payload.email).first()
+    if not verify_email_format(payload.email):
+        error(code=422, message="Invalid email format")
+    if not user:
+        error(code=401, message="Invalid email or password")
+    if not verify_password(payload.password, user.password_hash):
+        error(code=401, message="Invalid email or password")
+    access_token = create_access_token(user.id)
+    return TokenResponse(access_token=access_token)
 
 def error(code = 500, message = "Internal Server Error"):
     raise HTTPException(status_code=code, detail=message)
