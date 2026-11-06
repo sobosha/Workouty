@@ -18,8 +18,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bareer_
         user_id = int(payload["sub"])
     except ValueError as e:
         raise HTTPException(status_code=401, detail="Invalid token" , headers={"WWW-Authenticate": "Bearer"})
-    user = db.query(Users).filter(Users.id == user_id).first()
+    user = db.get(Users, user_id)
     if not user:
-        raise ValueError("User not found")
-    
+        raise HTTPException(status_code=404, detail="User not found")
+
     return user
