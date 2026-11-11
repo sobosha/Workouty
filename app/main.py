@@ -51,8 +51,8 @@ def get_current_user_info(current_user: Users = Depends(get_current_user)) -> Us
 
 
 @app.get("/exercises", response_model=list[ExerciseResponse] , dependencies=[Depends(get_current_user)])
-def get_exercises(db: Session = Depends(get_db_session)) -> list[ExerciseResponse]:
-    exercises = db.query(Exercises).all()
+def get_exercises(db: Session = Depends(get_db_session), limit: int = 10, offset: int = 0) -> list[ExerciseResponse]:
+    exercises = db.query(Exercises).order_by(Exercises.id).offset(offset).limit(limit).all()
     return exercises
 
 @app.get("/exercises/{id}", response_model=ExerciseResponse , dependencies=[Depends(get_current_user)])
