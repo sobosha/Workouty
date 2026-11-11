@@ -9,9 +9,9 @@ from app.models import Users
 from app.tokens import decode_access_token
 
 
-bareer_scheme = HTTPBearer()
+bearer_scheme = HTTPBearer()
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bareer_scheme), db: Session = Depends(get_db_session)) -> Users:
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme), db: Session = Depends(get_db_session)) -> Users:
     token = credentials.credentials
     try:
         payload = decode_access_token(token)

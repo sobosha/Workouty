@@ -19,3 +19,12 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    
+class ExerciseResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None
+    category: str
+    muscle_group: str | None
+
+    model_config = ConfigDict(from_attributes=True)
