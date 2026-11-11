@@ -1,7 +1,7 @@
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
 
-from fastapi import FastAPI,HTTPException, Depends
+from fastapi import FastAPI,HTTPException, Depends , Query
 
 from app.db import engine, get_db_session
 
@@ -51,8 +51,11 @@ def get_current_user_info(current_user: Users = Depends(get_current_user)) -> Us
 
 
 @app.get("/exercises", response_model=list[ExerciseResponse] , dependencies=[Depends(get_current_user)])
-def get_exercises(db: Session = Depends(get_db_session), limit: int = 10, offset: int = 0) -> list[ExerciseResponse]:
-    exercises = db.query(Exercises).order_by(Exercises.id).offset(offset).limit(limit).all()
+def get_exercises(db: Session = Depends(get_db_session), limit: int = Query(default=10, ge=0), offset: int = Query(default=0, ge=0), category: str|None = Query(default=None)) -> list[ExerciseResponse]:
+    query = db.query(Exercises)
+    if category is not None:
+        query = query.filter(Exercises.category == category)
+    exercises = query.order_by(Exercises.id).offset(offset).limit(limit).all()
     return exercises
 
 @app.get("/exercises/{id}", response_model=ExerciseResponse , dependencies=[Depends(get_current_user)])
